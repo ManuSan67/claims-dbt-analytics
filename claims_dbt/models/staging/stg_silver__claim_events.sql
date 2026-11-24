@@ -1,0 +1,20 @@
+select
+    event_id,
+    claim_id,
+    policy_id,
+    event_type,
+    state,
+    city,
+    cause,
+    coverage_code,
+    workshop_id,
+    source,
+    channel,
+    status,
+    event_ts as event_at,
+    amount,
+    arrival_date,
+    plan,
+    vehicle_value,
+    policy_in_force
+from {{ source('silver', 'claim_events') }}
