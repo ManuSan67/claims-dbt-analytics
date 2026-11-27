@@ -27,6 +27,8 @@ models:
       +persist_docs:
         relation: true
         columns: true
+  elementary:
+    +schema: elementary
 
 seeds:
   claims_dbt:

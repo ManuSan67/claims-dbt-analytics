@@ -17,3 +17,15 @@
       catalog: claims_dbt
       schema: analytics
       threads: 4
+
+elementary:
+  target: default
+  outputs:
+    default:
+      type: databricks
+      host: "{{ env_var('DBT_DATABRICKS_HOST') }}"
+      http_path: "{{ env_var('DBT_DATABRICKS_HTTP_PATH') }}"
+      token: "{{ env_var('DBT_DATABRICKS_TOKEN') }}"
+      catalog: claims_dbt_dev
+      schema: elementary
+      threads: 4
