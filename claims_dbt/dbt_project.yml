@@ -24,3 +24,7 @@ models:
     marts:
       +schema: marts
       +materialized: table
+
+seeds:
+  claims_dbt:
+    +schema: seeds

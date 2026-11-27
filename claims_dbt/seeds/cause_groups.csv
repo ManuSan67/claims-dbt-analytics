@@ -1,0 +1,7 @@
+cause,cause_group,is_catastrophic
+colision,accidente,false
+cristales,accidente,false
+vandalismo,delito,false
+robo,delito,false
+inundacion,fenomeno_natural,true
+granizo,fenomeno_natural,true

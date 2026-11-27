@@ -1,0 +1,7 @@
+seeds:
+  - name: cause_groups
+    config:
+      column_types:
+        cause: string
+        cause_group: string
+        is_catastrophic: boolean

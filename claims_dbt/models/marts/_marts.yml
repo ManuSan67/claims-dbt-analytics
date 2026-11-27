@@ -39,6 +39,13 @@ models:
               arguments:
                 values: [DM, RT, RC, GM, CR]
 
+  - name: dim_cause
+    columns:
+      - name: cause
+        data_tests:
+          - unique
+          - not_null
+
   - name: fact_claim
     data_tests:
       - dbt_utils.expression_is_true:
@@ -54,6 +61,12 @@ models:
           - accepted_values:
               arguments:
                 values: [open, paid, rejected]
+      - name: cause
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_cause')
+                field: cause
       - name: coverage_code
         data_tests:
           - relationships:

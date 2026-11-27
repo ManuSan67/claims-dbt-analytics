@@ -37,7 +37,7 @@ select
     c.policy_id,
     c.workshop_id,
     c.coverage_code,
-    cast(date_format(c.reported_ts, 'yyyyMMdd') as int) as reported_date_key,
+    {{ date_key('c.reported_ts') }} as reported_date_key,
     c.cause,
     c.state,
     c.city,

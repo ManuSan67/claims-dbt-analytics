@@ -6,6 +6,7 @@ exclude_rules = structure.column_order, references.keywords
 
 [sqlfluff:templater:jinja]
 apply_dbt_builtins = True
+load_macros_from_path = macros
 
 [sqlfluff:indentation]
 tab_space_size = 4

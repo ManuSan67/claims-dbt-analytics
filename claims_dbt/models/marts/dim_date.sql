@@ -3,7 +3,7 @@ with days as (
 )
 
 select
-    cast(date_format(d, 'yyyyMMdd') as int) as date_key,
+    {{ date_key('d') }} as date_key,
     d as date,
     year(d) as year,
     quarter(d) as quarter,
