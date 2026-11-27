@@ -1,96 +1,145 @@
 models:
   - name: dim_date
+    description: Calendar for 2025 and 2026, one row per day.
     columns:
       - name: date_key
+        description: Day as an integer in yyyyMMdd format.
         data_tests:
           - unique
           - not_null
+      - name: is_weekend
+        description: True on Saturday and Sunday.
 
   - name: dim_policy
+    description: >
+      Auto policies with full history (SCD type 2), built from the AUTO CDC
+      table in claims.silver. One row per policy version.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns: [policy_id, valid_from]
     columns:
       - name: policy_sk
+        description: Surrogate key of the policy version, xxhash64 of policy_id and valid_from.
         data_tests:
           - unique
           - not_null
+      - name: policy_id
+        description: Business key of the policy.
+      - name: valid_from
+        description: Start of the version.
+      - name: valid_to
+        description: End of the version. Current versions use 9999-12-31.
+      - name: is_current
+        description: True for the version in force today.
 
   - name: dim_workshop
+    description: Repair shops that handle claims.
     columns:
       - name: workshop_id
+        description: Shop code.
         data_tests:
           - unique
           - not_null
       - name: network
+        description: agencia for dealer shops, multimarca for independent shops.
         data_tests:
           - accepted_values:
               arguments:
                 values: [agencia, multimarca]
 
   - name: dim_coverage
+    description: Coverage types with their deductible.
     columns:
       - name: coverage_code
+        description: DM damage, RT total theft, RC liability, GM medical, CR glass.
         data_tests:
           - unique
           - not_null
           - accepted_values:
               arguments:
                 values: [DM, RT, RC, GM, CR]
+      - name: deductible_pct
+        description: Share of the loss paid by the customer.
 
   - name: dim_cause
+    description: Loss causes grouped for reporting, loaded from the cause_groups seed.
     columns:
       - name: cause
+        description: Loss cause as captured on the claim.
         data_tests:
           - unique
           - not_null
+      - name: cause_group
+        description: accidente, delito or fenomeno_natural.
+      - name: is_catastrophic
+        description: True for weather events that can hit many policies at once.
 
   - name: fact_claim
+    description: >
+      One row per auto claim, rolled up from the claim events stream.
+      Incremental merge on claim_id with a 3 day lookback for late events.
     data_tests:
       - dbt_utils.expression_is_true:
           arguments:
             expression: "days_to_close >= 0"
     columns:
       - name: claim_id
+        description: Claim number.
         data_tests:
           - unique
           - not_null
-      - name: status
+      - name: policy_sk
+        description: Policy version in force when the claim was reported. Null if none was.
         data_tests:
-          - accepted_values:
+          - relationships:
               arguments:
-                values: [open, paid, rejected]
+                to: ref('dim_policy')
+                field: policy_sk
+      - name: reported_date_key
+        description: Day the claim was reported, joins to dim_date.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
       - name: cause
+        description: Loss cause, joins to dim_cause.
         data_tests:
           - relationships:
               arguments:
                 to: ref('dim_cause')
                 field: cause
       - name: coverage_code
+        description: Coverage that applies, joins to dim_coverage.
         data_tests:
           - relationships:
               arguments:
                 to: ref('dim_coverage')
                 field: coverage_code
       - name: workshop_id
+        description: Shop assigned to the repair. Null for theft claims.
         data_tests:
           - relationships:
               arguments:
                 to: ref('dim_workshop')
                 field: workshop_id
-      - name: reported_date_key
+      - name: source
+        description: app for claims filed in the customer app, tpa for third party administrators.
+      - name: estimate_amount
+        description: Adjuster estimate in MXN.
+      - name: paid_amount
+        description: Total paid in MXN.
+      - name: status
+        description: open until the claim closes, then paid or rejected.
         data_tests:
-          - relationships:
+          - accepted_values:
               arguments:
-                to: ref('dim_date')
-                field: date_key
-      - name: policy_sk
-        data_tests:
-          - relationships:
-              arguments:
-                to: ref('dim_policy')
-                field: policy_sk
+                values: [open, paid, rejected]
+      - name: days_to_close
+        description: Days from report to close. Null while open.
+      - name: policy_in_force
+        description: False when no policy version covered the report date.
 
 unit_tests:
   - name: dim_policy_open_version_gets_far_future_end

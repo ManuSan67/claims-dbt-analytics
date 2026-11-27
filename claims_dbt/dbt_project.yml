@@ -24,6 +24,9 @@ models:
     marts:
       +schema: marts
       +materialized: table
+      +persist_docs:
+        relation: true
+        columns: true
 
 seeds:
   claims_dbt:
