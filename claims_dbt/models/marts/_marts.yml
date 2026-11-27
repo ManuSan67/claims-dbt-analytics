@@ -1,0 +1,93 @@
+models:
+  - name: dim_date
+    columns:
+      - name: date_key
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_policy
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [policy_id, valid_from]
+    columns:
+      - name: policy_sk
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_workshop
+    columns:
+      - name: workshop_id
+        data_tests:
+          - unique
+          - not_null
+      - name: network
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [agencia, multimarca]
+
+  - name: dim_coverage
+    columns:
+      - name: coverage_code
+        data_tests:
+          - unique
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [DM, RT, RC, GM, CR]
+
+  - name: fact_claim
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "days_to_close >= 0"
+    columns:
+      - name: claim_id
+        data_tests:
+          - unique
+          - not_null
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [open, paid, rejected]
+      - name: coverage_code
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_coverage')
+                field: coverage_code
+      - name: workshop_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_workshop')
+                field: workshop_id
+      - name: reported_date_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: policy_sk
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_policy')
+                field: policy_sk
+
+unit_tests:
+  - name: dim_policy_open_version_gets_far_future_end
+    model: dim_policy
+    given:
+      - input: ref('stg_silver__policies')
+        rows:
+          - {policy_id: P1, valid_from: "2026-01-01 00:00:00", valid_to: null, is_current: true}
+          - {policy_id: P2, valid_from: "2026-01-01 00:00:00", valid_to: "2026-03-01 00:00:00", is_current: false}
+    expect:
+      rows:
+        - {policy_id: P1, valid_to: "9999-12-31 00:00:00", is_current: true}
+        - {policy_id: P2, valid_to: "2026-03-01 00:00:00", is_current: false}
