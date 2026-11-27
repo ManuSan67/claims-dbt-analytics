@@ -2,7 +2,7 @@
 templater = jinja
 dialect = databricks
 max_line_length = 120
-exclude_rules = structure.column_order
+exclude_rules = structure.column_order, references.keywords
 
 [sqlfluff:templater:jinja]
 apply_dbt_builtins = True
